@@ -16,13 +16,28 @@ echo "#"
 echo "#############################################################"
 echo ""
 
+function check_sanity {
+	# Do some sanity checking.
+	if [ $(/usr/bin/id -u) != "0" ]
+	then
+		die 'Must be run by root user'
+	fi
+
+	if [ ! -f /etc/debian_version ]
+	then
+		die "Distribution is not supported"
+	fi
+}
+
+function die {
+	echo "ERROR: $1" > /dev/null 1>&2
+	exit 1
+}
+
 ############################### install function##################################
 function install_shadowsocks_tennfy(){
 # Make sure only root can run our script
-if [[ $EUID -ne 0 ]]; then
-   echo "Error:This script must be run as root!" 1>&2
-   exit 1
-fi
+check_sanity
 
 cd $HOME
 
