@@ -36,9 +36,6 @@ function die {
 
 ############################### install function##################################
 function install_shadowsocks_tennfy(){
-# Make sure only root can run our script
-check_sanity
-
 cd $HOME
 
 # install
@@ -137,7 +134,10 @@ function update_shadowsocks_tennfy(){
      install_shadowsocks_tennfy
 	 echo "Shadowsocks-libev update success!"
 }
-# Initialization
+############################### Initialization##################################
+# Make sure only root can run our script
+check_sanity
+
 action=$1
 [  -z $1 ] && action=install
 case "$action" in
