@@ -40,7 +40,7 @@ cd $HOME
 
 # install
 apt-get update
-apt-get install -y --force-yes build-essential autoconf libtool libssl-dev git curl
+apt-get install -y --force-yes build-essential autoconf libtool libssl-dev git curl asciidoc
 
 #download source code
 git clone https://github.com/madeye/shadowsocks-libev.git
