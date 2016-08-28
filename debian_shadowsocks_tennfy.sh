@@ -85,7 +85,7 @@ cat > /etc/shadowsocks-libev/config.json<<-EOF
 EOF
 
 #restart
-/etc/init.d/shadowsocks-libev restart
+/etc/init.d/shadowsocks-libev start
 
 #start with boot
 update-rc.d shadowsocks-libev defaults
