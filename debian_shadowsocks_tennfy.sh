@@ -84,11 +84,17 @@ cat > /etc/shadowsocks-libev/config.json<<-EOF
 }
 EOF
 
-#restart
+#aotustart configuration
+update-rc.d shadowsocks-libev defaults
+
+#start service
 /etc/init.d/shadowsocks-libev start
 
-#start with boot
-update-rc.d shadowsocks-libev defaults
+#if failed, start again
+if [ $? -ne 0 ];then
+/etc/init.d/shadowsocks-libev start
+fi
+
 
 #install successfully
     echo ""
