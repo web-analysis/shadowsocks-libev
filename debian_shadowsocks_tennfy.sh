@@ -90,13 +90,14 @@ update-rc.d shadowsocks-libev defaults
 #start service
 /etc/init.d/shadowsocks-libev start
 
-#if failed, start again
+#if failed, start again --debian8 specified
 if [ $? -ne 0 ];then
-/etc/init.d/shadowsocks-libev start
-fi
-
-
-#install successfully
+#failure indication
+    echo ""
+    echo "Sorry, shadowsocks-libev install failed!"
+    echo "Please contact with admin@tennfy.com"
+else
+#success indication
     echo ""
     echo "Congratulations, shadowsocks-libev install completed!"
     echo -e "Your Server IP: ${IP}"
@@ -104,7 +105,9 @@ fi
     echo -e "Your Password: ${shadowsockspwd}"
     echo -e "Your Local Port: 1080"
     echo -e "Your Encryption Method:rc4-md5"
+fi
 }
+
 ############################### uninstall function##################################
 function uninstall_shadowsocks_tennfy(){
 #change the dir to shadowsocks-libev
