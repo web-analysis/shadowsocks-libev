@@ -42,14 +42,8 @@ cd $HOME
 apt-get update
 apt-get install -y --force-yes build-essential autoconf libtool libssl-dev curl asciidoc xmlto libpcre3 libpcre3-dev
 
-# install libsodium for chacha20
-wget https://github.com/jedisct1/libsodium/releases/download/1.0.11/libsodium-1.0.11.tar.gz
-tar -xf libsodium-1.0.11.tar.gz && cd libsodium-1.0.11
-./configure && make && make install
-ldconfig
-
 #download latest release version of shadowsocks-libev
-LatestRlsVer=$(curl -s "https://api.github.com/repos/shadowsocks/shadowsocks-libev/releases/latest" | grep "tag_name" | cut -d\" -f4 | cut -d'v' -f2)
+LatestRlsVer="2.5.6"
 wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/archive/v${LatestRlsVer}.tar.gz
 tar zxvf v${LatestRlsVer}.tar.gz 
 mv shadowsocks-libev-${LatestRlsVer} shadowsocks-libev
