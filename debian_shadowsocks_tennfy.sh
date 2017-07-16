@@ -7,14 +7,11 @@
 #===============================================================================================
 
 clear
-echo "#############################################################"
-echo "# Install Shadowsocks(libev) for debian or ubuntu (32bit/64bit)"
-echo "# Intro: http://www.tennfy.com"
-echo "#"
-echo "# Author: tennfy <admin@tennfy.com>"
-echo "#"
-echo "#############################################################"
-echo ""
+echo '-----------------------------------------------------------------'
+echo '   Install Shadowsocks(libev) for debian or ubuntu (32bit/64bit) '
+echo '   Intro:  http://www.tennfy.com                                 '
+echo '   Author: tennfy <admin@tennfy.com>                             '
+echo '-----------------------------------------------------------------'
 
 #color
 CEND="\033[0m"
@@ -67,7 +64,7 @@ function InstallLibudns()
 	&& udns.h /usr/include/ \
 	&& libudns.a /usr/lib/ \
     if [ $? -ne 0 ]
-	then
+    then
     #failure indication
         Die "Libudns installation failed!"
     fi
