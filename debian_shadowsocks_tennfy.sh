@@ -17,7 +17,7 @@ echo '-----------------------------------------------------------------'
 CEND="\033[0m"
 CMSG="\033[1;36m"
 CFAILURE="\033[1;31m"
-CSUCCESS="\033[1;32m"
+CSUCCESS="\033[32m"
 CWARNING="\033[1;33m"
 
 function Die()
@@ -120,6 +120,13 @@ function InstallShadowsocksLibev()
     mkdir -p /etc/shadowsocks-libev
     cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
     cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
+	
+	#fix bind() problem without root user
+	sed -i '/nobody/i\USER="root"' /etc/init.d/shadowsocks-libev
+	sed -i '/nobody/i\GROUP="root"' /etc/init.d/shadowsocks-libev
+	sed -i '/nobody/d' /etc/init.d/shadowsocks-libev
+	sed -i '/nogroup/d' /etc/init.d/shadowsocks-libev
+	
     chmod +x /etc/init.d/shadowsocks-libev
 	popd
 	rm -f shadowsocks-libev-${LatestRlsVer}.tar.gz 
@@ -144,11 +151,6 @@ function InstallShadowsocks()
 
     #install shadowsocks libev
 	InstallShadowsocksLibev
-
-	#fix debian8 bind() problem without root user
-	if GetDebianVersion 8; then
-		setcap 'cap_net_bind_service=+ep' /usr/bin/ss-server
-	fi
 	
     # Get IP address(Default No.1)
     ip=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
