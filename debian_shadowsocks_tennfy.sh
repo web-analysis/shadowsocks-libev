@@ -67,7 +67,7 @@ function InstallShadowsocks()
 
     #install
     apt-get update
-    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev libudns-dev automake libmbedtls-dev libsodium-dev
+    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev libudns-dev automake
 
     #install Libsodium
     InstallLibsodium
