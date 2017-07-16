@@ -16,6 +16,18 @@ echo "#"
 echo "#############################################################"
 echo ""
 
+#color
+CEND="\033[0m"
+CMSG="\033[1;36m"
+CFAILURE="\033[1;31m"
+CSUCCESS="\033[32m"
+CWARNING="\033[1;33m"
+
+function Die()
+{
+	echo -e "${CFAILURE}[Error] $1 ${CEND}"
+	exit 1
+}
 function CheckSanity()
 {
 	# Do some sanity checking.
@@ -29,10 +41,9 @@ function CheckSanity()
 		Die "Distribution is not supported"
 	fi
 }
-
 function GetDebianVersion()
 {
-	if [ ! -f /etc/debian_version ]
+	if [ -f /etc/debian_version ]
 	then
 		local main_version=$1
 		local debian_version=`cat /etc/debian_version|awk -F '.' '{print $1}'`
@@ -46,13 +57,6 @@ function GetDebianVersion()
 		return 1
 	fi    	
 }
-
-function Die()
-{
-	echo "ERROR: $1" > /dev/null 1>&2
-	exit 1
-}
-
 function InstallLibudns()
 {
     export LIBUDNS_VER=0.4
@@ -62,11 +66,15 @@ function InstallLibudns()
     ./configure && make && make install \
 	&& udns.h /usr/include/ \
 	&& libudns.a /usr/lib/ \
+    if [ $? -ne 0 ]
+	then
+    #failure indication
+        Die "Libudns installation failed!"
+    fi
     popd
     ldconfig
 	rm -f udns-$LIBUDNS_VER.tar.gz
 }
-
 function InstallLibsodium()
 {
     export LIBSODIUM_VER=1.0.12
@@ -74,11 +82,15 @@ function InstallLibsodium()
     tar xvf libsodium-$LIBSODIUM_VER.tar.gz
     pushd libsodium-$LIBSODIUM_VER
     ./configure --prefix=/usr && make && ake install
+	if [ $? -ne 0 ]
+	then
+    #failure indication
+        Die "Libsodium installation failed!"
+    fi
     popd
     ldconfig
 	rm -f libsodium-$LIBSODIUM_VER.tar.gz
 }
-
 function InstallMbedtls()
 {
     export MBEDTLS_VER=2.5.1
@@ -87,11 +99,15 @@ function InstallMbedtls()
     pushd mbedtls-$MBEDTLS_VER
     make SHARED=1 CFLAGS=-fPIC
     make DESTDIR=/usr install
+	if [ $? -ne 0 ]
+	then
+    #failure indication
+        Die "Mbedtls installation failed!"
+    fi
     popd
     ldconfig
 	rm -f mbedtls-$MBEDTLS_VER-gpl.tgz
 }
-
 function InstallShadowsocksLibev()
 {
     #download latest release version of shadowsocks-libev
@@ -100,6 +116,11 @@ function InstallShadowsocksLibev()
     tar zxvf shadowsocks-libev-${LatestRlsVer}.tar.gz 
     pushd shadowsocks-libev-${LatestRlsVer}
     ./configure --prefix=/usr && make && make install
+	if [ $? -ne 0 ]
+	then
+    #failure indication
+        Die "Shadowsocks-libev installation failed!"
+    fi	
     mkdir -p /etc/shadowsocks-libev
     cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
     cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
@@ -107,7 +128,6 @@ function InstallShadowsocksLibev()
 	popd
 	rm -f shadowsocks-libev-${LatestRlsVer}.tar.gz 
 }
-
 ############################### install function##################################
 function InstallShadowsocks()
 {
@@ -162,7 +182,7 @@ function InstallShadowsocks()
 		[ -z "$encrypt_method_num" ] && encrypt_method_num=2
 		if [[ ! $encrypt_method_num =~ ^[1-3]$ ]]
 		then
-			echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
+			echo "${CWARNING} input error! Please only input number 1,2,3 ${CEND}"
 		else
 			if [ "$encrypt_method_num" == '1' ]
 			then
@@ -205,21 +225,22 @@ EOF
     if [ $? -ne 0 ]
 	then
     #failure indication
-        echo ""
+        echo '-----------------------------------------------------------------'
         echo "Sorry, shadowsocks-libev install failed!"
         echo "Please contact with admin@tennfy.com"
+		echo '-----------------------------------------------------------------'
     else	
-    #success indication
-    echo ""
-    echo "Congratulations, shadowsocks-libev install completed!"
-    echo -e "Your Server IP: ${ip}"
-    echo -e "Your Server Port: ${server_port}"
-    echo -e "Your Password: ${shadowsocks_pwd}"
-    echo -e "Your Local Port: 1080"
-    echo -e "Your Encryption Method:${encrypt_method}"
+        #success indication
+        echo '-----------------------------------------------------------------'
+        echo "Congratulations, shadowsocks-libev install completed!"
+        echo -e "Your Server IP: ${ip}"
+        echo -e "Your Server Port: ${server_port}"
+        echo -e "Your Password: ${shadowsocks_pwd}"
+        echo -e "Your Local Port: 1080"
+        echo -e "Your Encryption Method:${encrypt_method}"
+		echo '-----------------------------------------------------------------'
     fi
 }
-
 ############################### uninstall function##################################
 function UninstallShadowsocks()
 {
@@ -246,9 +267,8 @@ function UninstallShadowsocks()
     #remove system startup
     update-rc.d -f shadowsocks-libev remove
 
-    echo "Shadowsocks-libev uninstall success!"
+    echo "${CSUCCESS} Shadowsocks uninstall success! ${CEND}"
 }
-
 ############################### update function##################################
 function UpdateShadowsocks()
 {
