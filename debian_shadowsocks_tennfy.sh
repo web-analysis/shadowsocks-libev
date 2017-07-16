@@ -163,8 +163,7 @@ function InstallShadowsocks()
     echo '-----------------------------------------------------------------'
     echo ''
 	#input server port
-    echo "input server port(443 is default):"
-    read server_port
+    read -p "input server port(443 is default): " server_port
 	[ -z ${server_port} ] && server_port=443
 	
 	echo ''
@@ -204,8 +203,7 @@ function InstallShadowsocks()
 	echo '-----------------------------------------------------------------'
 	echo ''
 	
-    echo "input password:"
-    read shadowsocks_pwd
+    read -p "input password: " shadowsocks_pwd     
 
 	echo ''
 	echo '-----------------------------------------------------------------'
@@ -234,13 +232,13 @@ EOF
 	then
     #failure indication
         echo '-----------------------------------------------------------------'
-        echo "Sorry, shadowsocks-libev install failed!"
-        echo "Please contact with admin@tennfy.com"
+        echo -e "${CFAILURE}Sorry, shadowsocks-libev install failed!${CEND}"
+        echo -e "${CFAILURE}Please contact with admin@tennfy.com${CEND}"
 		echo '-----------------------------------------------------------------'
     else	
         #success indication
         echo '-----------------------------------------------------------------'
-        echo "${CSUCCESS}Congratulations, shadowsocks-libev install completed!${CEND}"
+        echo -e "${CSUCCESS}Congratulations, shadowsocks-libev install completed!${CEND}"
         echo -e "Your Server IP: ${ip}"
         echo -e "Your Server Port: ${server_port}"
         echo -e "Your Password: ${shadowsocks_pwd}"
@@ -275,7 +273,7 @@ function UninstallShadowsocks()
     #remove system startup
     update-rc.d -f shadowsocks-libev remove
 
-    echo "${CSUCCESS} Shadowsocks uninstall success! ${CEND}"
+    echo -e "${CSUCCESS}Shadowsocks uninstall success!${CEND}"
 }
 ############################### update function##################################
 function UpdateShadowsocks()
