@@ -77,6 +77,21 @@ function InstallMbedtls()
 	rm -f mbedtls-$MBEDTLS_VER-gpl.tgz
 }
 
+function InstallShadowsocksLibev()
+{
+    #download latest release version of shadowsocks-libev
+    export LatestRlsVer="3.0.7"
+    wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${LatestRlsVer}/shadowsocks-libev-${LatestRlsVer}.tar.gz
+    tar zxvf shadowsocks-libev-${LatestRlsVer}.tar.gz 
+    pushd shadowsocks-libev-${LatestRlsVer}
+    ./configure --prefix=/usr && make && make install
+    mkdir -p /etc/shadowsocks-libev
+    cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
+    cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
+    chmod +x /etc/init.d/shadowsocks-libev
+	popd
+}
+
 ############################### install function##################################
 function InstallShadowsocks()
 {
@@ -95,19 +110,8 @@ function InstallShadowsocks()
     #install MbedTLS
     InstallMbedtls
 
-    #download latest release version of shadowsocks-libev
-    LatestRlsVer="3.0.7"
-    wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${LatestRlsVer}/shadowsocks-libev-${LatestRlsVer}.tar.gz
-    tar zxvf shadowsocks-libev-${LatestRlsVer}.tar.gz 
-    mv shadowsocks-libev-${LatestRlsVer} shadowsocks-libev
-
-    #compile install
-    cd shadowsocks-libev
-    ./configure --prefix=/usr && make && make install
-    mkdir -p /etc/shadowsocks-libev
-    cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
-    cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
-    chmod +x /etc/init.d/shadowsocks-libev
+    #install shadowsocks libev
+	InstallShadowsocksLibev
 
     # Get IP address(Default No.1)
     IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
