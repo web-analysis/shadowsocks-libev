@@ -62,7 +62,7 @@ function InstallLibudns()
     pushd udns-$LIBUDNS_VER
     ./configure && make && make install \
 	&& udns.h /usr/include/ \
-	&& libudns.a /usr/lib/ \
+	&& libudns.a /usr/lib/ 
     if [ $? -ne 0 ]
     then
     #failure indication
