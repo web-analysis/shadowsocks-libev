@@ -78,7 +78,7 @@ function InstallLibsodium()
     wget --no-check-certificate https://github.com/jedisct1/libsodium/releases/download/$LIBSODIUM_VER/libsodium-$LIBSODIUM_VER.tar.gz
     tar xvf libsodium-$LIBSODIUM_VER.tar.gz
     pushd libsodium-$LIBSODIUM_VER
-    ./configure --prefix=/usr && make && ake install
+    ./configure --prefix=/usr && make && make install
 	if [ $? -ne 0 ]
 	then
     #failure indication
