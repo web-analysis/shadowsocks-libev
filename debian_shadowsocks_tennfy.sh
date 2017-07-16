@@ -44,7 +44,7 @@ function GetDebianVersion()
 	then
 		local main_version=$1
 		local debian_version=`cat /etc/debian_version|awk -F '.' '{print $1}'`
-		if ["${main_version}" == "${debian_version}"]
+		if [ "${main_version}" == "${debian_version}" ]
 		then
 		    return 0
 		else 
@@ -157,6 +157,7 @@ function InstallShadowsocks()
     fi
 
     #config setting
+	clear
     echo '-----------------------------------------------------------------'
     echo '          Please setup your shadowsocks server                   '
     echo '-----------------------------------------------------------------'
@@ -165,12 +166,15 @@ function InstallShadowsocks()
     echo "input server port(443 is default):"
     read server_port
 	[ -z ${server_port} ] && server_port=443
-	#select encrypt method
+	
+	echo ''
 	echo '-----------------------------------------------------------------'
+	echo ''
+	
+	#select encrypt method
 	while :
 	do
-		echo
-		echo 'Please select php version:'
+		echo 'Please select encrypt method:'
 		echo -e "\t${CMSG}1${CEND}. AES-256-CFB"
 		echo -e "\t${CMSG}2${CEND}. RC4-MD5"
 		echo -e "\t${CMSG}3${CEND}. CHACHA20"
@@ -195,7 +199,11 @@ function InstallShadowsocks()
 			break
 		fi
 	done
+	
+	echo ''
 	echo '-----------------------------------------------------------------'
+	echo ''
+	
     echo "input password:"
     read shadowsocks_pwd
 
@@ -228,7 +236,7 @@ EOF
     else	
         #success indication
         echo '-----------------------------------------------------------------'
-        echo "Congratulations, shadowsocks-libev install completed!"
+        echo "${CSUCCESS}Congratulations, shadowsocks-libev install completed!${CEND}"
         echo -e "Your Server IP: ${ip}"
         echo -e "Your Server Port: ${server_port}"
         echo -e "Your Password: ${shadowsocks_pwd}"
