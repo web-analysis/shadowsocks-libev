@@ -233,19 +233,25 @@ EOF
     if [ $? -ne 0 ]
 	then
     #failure indication
+	    echo ''
         echo '-----------------------------------------------------------------'
+		echo ''
         echo -e "${CFAILURE}Sorry, shadowsocks-libev install failed!${CEND}"
         echo -e "${CFAILURE}Please contact with admin@tennfy.com${CEND}"
+		echo ''
 		echo '-----------------------------------------------------------------'
     else	
         #success indication
+		echo ''
         echo '-----------------------------------------------------------------'
+		echo ''
         echo -e "${CSUCCESS}Congratulations, shadowsocks-libev install completed!${CEND}"
         echo -e "Your Server IP: ${ip}"
         echo -e "Your Server Port: ${server_port}"
         echo -e "Your Password: ${shadowsocks_pwd}"
         echo -e "Your Local Port: 1080"
         echo -e "Your Encryption Method:${encrypt_method}"
+		echo ''
 		echo '-----------------------------------------------------------------'
     fi
 }
