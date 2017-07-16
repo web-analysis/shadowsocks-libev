@@ -36,6 +36,18 @@ function Die()
 	exit 1
 }
 
+function InstallLibudns()
+{
+    export LIBUDNS_VER=0.4
+    wget http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
+    tar xvf udns-$LIBUDNS_VER.tar.gz
+    pushd udns-$LIBUDNS_VER
+    ./configure --prefix=/usr && make 
+	make install
+    popd
+    ldconfig
+}
+
 function InstallLibsodium()
 {
     export LIBSODIUM_VER=1.0.12
@@ -67,8 +79,11 @@ function InstallShadowsocks()
 
     #install
     apt-get update
-    apt-get install -y --force-yes gettext gcc build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev automake
+    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev automake
 
+	#install Libsodium
+    InstallLibudns
+	
     #install Libsodium
     InstallLibsodium
     
