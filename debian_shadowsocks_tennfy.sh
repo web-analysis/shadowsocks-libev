@@ -77,8 +77,8 @@ function InstallShadowsocks()
 
     #download latest release version of shadowsocks-libev
     LatestRlsVer="3.0.7"
-    wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/archive/v${LatestRlsVer}.tar.gz
-    tar zxvf v${LatestRlsVer}.tar.gz 
+    wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${LatestRlsVer}/shadowsocks-libev-${LatestRlsVer}.tar.gz
+    tar zxvf shadowsocks-libev-${LatestRlsVer}.tar.gz 
     mv shadowsocks-libev-${LatestRlsVer} shadowsocks-libev
 
     #compile install
