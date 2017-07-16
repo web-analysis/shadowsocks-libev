@@ -60,7 +60,7 @@ function InstallLibudns()
     wget http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
     tar xvf udns-$LIBUDNS_VER.tar.gz
     pushd udns-$LIBUDNS_VER
-    ./configure && make && make install \
+    ./configure && make \
 	&& udns.h /usr/include/ \
 	&& libudns.a /usr/lib/ 
     if [ $? -ne 0 ]
@@ -94,8 +94,7 @@ function InstallMbedtls()
     wget --no-check-certificate https://tls.mbed.org/download/mbedtls-$MBEDTLS_VER-gpl.tgz
     tar xvf mbedtls-$MBEDTLS_VER-gpl.tgz
     pushd mbedtls-$MBEDTLS_VER
-    make SHARED=1 CFLAGS=-fPIC
-    make DESTDIR=/usr install
+    make SHARED=1 CFLAGS=-fPIC && make DESTDIR=/usr install
 	if [ $? -ne 0 ]
 	then
     #failure indication
