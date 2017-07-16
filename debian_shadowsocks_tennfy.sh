@@ -30,6 +30,23 @@ function CheckSanity()
 	fi
 }
 
+function GetDebianVersion()
+{
+	if [ ! -f /etc/debian_version ]
+	then
+		local main_version=$1
+		local debian_version=`cat /etc/debian_version|awk -F '.' '{print $1}'`
+		if ["${main_version}" == "${debian_version}"]
+		then
+		    return 0
+		else 
+			return 1
+		fi
+	else
+		return 1
+	fi    	
+}
+
 function Die()
 {
 	echo "ERROR: $1" > /dev/null 1>&2
@@ -42,10 +59,9 @@ function InstallLibudns()
     wget http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
     tar xvf udns-$LIBUDNS_VER.tar.gz
     pushd udns-$LIBUDNS_VER
-    ./configure && make 
-	make install
-	cp udns.h /usr/include/
-	cp libudns.a /usr/lib/
+    ./configure && make && make install \
+	&& udns.h /usr/include/ \
+	&& libudns.a /usr/lib/ \
     popd
     ldconfig
 	rm -f udns-$LIBUDNS_VER.tar.gz
@@ -57,8 +73,7 @@ function InstallLibsodium()
     wget --no-check-certificate https://github.com/jedisct1/libsodium/releases/download/$LIBSODIUM_VER/libsodium-$LIBSODIUM_VER.tar.gz
     tar xvf libsodium-$LIBSODIUM_VER.tar.gz
     pushd libsodium-$LIBSODIUM_VER
-    ./configure --prefix=/usr && make 
-	make install
+    ./configure --prefix=/usr && make && ake install
     popd
     ldconfig
 	rm -f libsodium-$LIBSODIUM_VER.tar.gz
@@ -90,6 +105,7 @@ function InstallShadowsocksLibev()
     cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
     chmod +x /etc/init.d/shadowsocks-libev
 	popd
+	rm -f shadowsocks-libev-${LatestRlsVer}.tar.gz 
 }
 
 ############################### install function##################################
@@ -113,37 +129,73 @@ function InstallShadowsocks()
     #install shadowsocks libev
 	InstallShadowsocksLibev
 
+	#fix debian8 bind() problem without root user
+	if GetDebianVersion 8; then
+		setcap 'cap_net_bind_service=+ep' /usr/bin/ss-server
+	fi
+	
     # Get IP address(Default No.1)
-    IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
-    if [ -z $IP ]; then
-        IP=`curl -s ifconfig.me/ip`
+    ip=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
+    if [ -z $ip ]; then
+        ip=`curl -s ifconfig.me/ip`
     fi
 
     #config setting
-    echo "#############################################################"
-    echo "#"
-    echo "# Please input your shadowsocks server_port and password"
-    echo "#"
-    echo "#############################################################"
-    echo ""
-    echo "input server_port(8000 is suggested):"
-    read serverport
+    echo '-----------------------------------------------------------------'
+    echo '          Please setup your shadowsocks server                   '
+    echo '-----------------------------------------------------------------'
+    echo ''
+	#input server port
+    echo "input server port(443 is default):"
+    read server_port
+	[ -z ${server_port} ] && server_port=443
+	#select encrypt method
+	echo '-----------------------------------------------------------------'
+	while :
+	do
+		echo
+		echo 'Please select php version:'
+		echo -e "\t${CMSG}1${CEND}. AES-256-CFB"
+		echo -e "\t${CMSG}2${CEND}. RC4-MD5"
+		echo -e "\t${CMSG}3${CEND}. CHACHA20"
+		read -p "Please input a number:(Default 1 press Enter) " encrypt_method_num
+		[ -z "$encrypt_method_num" ] && encrypt_method_num=2
+		if [[ ! $encrypt_method_num =~ ^[1-3]$ ]]
+		then
+			echo "${CWARNING}input error! Please only input number 1,2,3${CEND}"
+		else
+			if [ "$encrypt_method_num" == '1' ]
+			then
+				encrypt_method='aes-256-cfb'
+			fi
+			if [ "$encrypt_method_num" == '2' ]
+			then
+				encrypt_method='rc4-md5'
+			fi
+			if [ "$encrypt_method_num" == '3' ]
+			then
+				encrypt_method='chacha20'
+			fi
+			break
+		fi
+	done
+	echo '-----------------------------------------------------------------'
     echo "input password:"
-    read shadowsockspwd
+    read shadowsocks_pwd
 
     #config shadowsocks
 cat > /etc/shadowsocks-libev/config.json<<-EOF
 {
-    "server":"${IP}",
-    "server_port":${serverport},
+    "server":"${ip}",
+    "server_port":${server_port},
     "local_port":1080,
-    "password":"${shadowsockspwd}",
+    "password":"${shadowsocks_pwd}",
     "timeout":60,
-    "method":"rc4-md5"
+    "method":"${encrypt_method}"
 }
 EOF
 
-    #aotustart configuration
+    #add system startup
     update-rc.d shadowsocks-libev defaults
 
     #start service
@@ -160,11 +212,11 @@ EOF
     #success indication
     echo ""
     echo "Congratulations, shadowsocks-libev install completed!"
-    echo -e "Your Server IP: ${IP}"
-    echo -e "Your Server Port: ${serverport}"
-    echo -e "Your Password: ${shadowsockspwd}"
+    echo -e "Your Server IP: ${ip}"
+    echo -e "Your Server Port: ${server_port}"
+    echo -e "Your Password: ${shadowsocks_pwd}"
     echo -e "Your Local Port: 1080"
-    echo -e "Your Encryption Method:rc4-md5"
+    echo -e "Your Encryption Method:${encrypt_method}"
     fi
 }
 
@@ -184,14 +236,14 @@ function UninstallShadowsocks()
     cd ..
     rm -rf shadowsocks-libev
 
-    #delete config file
+    #delete configuration file
     rm -rf /etc/shadowsocks-libev
 
     #delete shadowsocks-libev init file
     rm -f /etc/init.d/shadowsocks-libev
     rm -f /etc/default/shadowsocks-libev
 
-    #delete start with boot
+    #remove system startup
     update-rc.d -f shadowsocks-libev remove
 
     echo "Shadowsocks-libev uninstall success!"
@@ -209,7 +261,7 @@ function UpdateShadowsocks()
 CheckSanity
 
 action=$1
-[  -z $1 ] && action=install
+[ -z $1 ] && action=install
 case "$action" in
 install)
     InstallShadowsocks
