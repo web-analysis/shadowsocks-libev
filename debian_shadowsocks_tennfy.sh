@@ -1,6 +1,6 @@
 #! /bin/bash
 #===============================================================================================
-#   System Required:  Debian or Ubuntu (32bit/64bit)
+#   System Required:  debian or ubuntu (32bit/64bit)
 #   Description:  Install Shadowsocks(libev) for Debian or Ubuntu
 #   Author: tennfy <admin@tennfy.com>
 #   Intro:  http://www.tennfy.com
@@ -8,7 +8,7 @@
 
 clear
 echo "#############################################################"
-echo "# Install Shadowsocks(libev) for Debian or Ubuntu (32bit/64bit)"
+echo "# Install Shadowsocks(libev) for debian or ubuntu (32bit/64bit)"
 echo "# Intro: http://www.tennfy.com"
 echo "#"
 echo "# Author: tennfy <admin@tennfy.com>"
@@ -16,66 +16,99 @@ echo "#"
 echo "#############################################################"
 echo ""
 
-function check_sanity {
+function CheckSanity()
+{
 	# Do some sanity checking.
 	if [ $(/usr/bin/id -u) != "0" ]
 	then
-		die 'Must be run by root user'
+		Die 'Must be run by root user'
 	fi
 
 	if [ ! -f /etc/debian_version ]
 	then
-		die "Distribution is not supported"
+		Die "Distribution is not supported"
 	fi
 }
 
-function die {
+function Die()
+{
 	echo "ERROR: $1" > /dev/null 1>&2
 	exit 1
 }
 
+function InstallLibsodium()
+{
+    export LIBSODIUM_VER=1.0.12
+    wget https://download.libsodium.org/libsodium/releases/libsodium-$LIBSODIUM_VER.tar.gz
+    tar xvf libsodium-$LIBSODIUM_VER.tar.gz
+    pushd libsodium-$LIBSODIUM_VER
+    ./configure --prefix=/usr && make 
+	make install
+    popd
+    ldconfig
+}
+
+function InstallMbedtls()
+{
+    export MBEDTLS_VER=2.5.1
+    wget https://tls.mbed.org/download/mbedtls-$MBEDTLS_VER-gpl.tgz
+    tar xvf mbedtls-$MBEDTLS_VER-gpl.tgz
+    pushd mbedtls-$MBEDTLS_VER
+    make SHARED=1 CFLAGS=-fPIC
+    make DESTDIR=/usr install
+    popd
+    ldconfig
+}
+
 ############################### install function##################################
-function install_shadowsocks_tennfy(){
-cd $HOME
+function InstallShadowsocks()
+{
+    cd $HOME
 
-# install
-apt-get update
-apt-get install -y --force-yes build-essential autoconf libtool libssl-dev curl asciidoc xmlto libpcre3 libpcre3-dev
+    #install
+    apt-get update
+    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev libudns-dev automake libmbedtls-dev libsodium-dev
 
-#download latest release version of shadowsocks-libev
-LatestRlsVer="2.5.6"
-wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/archive/v${LatestRlsVer}.tar.gz
-tar zxvf v${LatestRlsVer}.tar.gz 
-mv shadowsocks-libev-${LatestRlsVer} shadowsocks-libev
+    #install Libsodium
+    InstallLibsodium
+    
+    #install MbedTLS
+    InstallMbedtls
 
-#compile install
-cd shadowsocks-libev
-./configure --prefix=/usr
-make && make install
-mkdir -p /etc/shadowsocks-libev
-cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
-cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
-chmod +x /etc/init.d/shadowsocks-libev
+    #download latest release version of shadowsocks-libev
+    LatestRlsVer="3.0.7"
+    wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/archive/v${LatestRlsVer}.tar.gz
+    tar zxvf v${LatestRlsVer}.tar.gz 
+    mv shadowsocks-libev-${LatestRlsVer} shadowsocks-libev
 
-# Get IP address(Default No.1)
-IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
-if [ -z $IP ]; then
-   IP=`curl -s ifconfig.me/ip`
-fi
+    #compile install
+    cd shadowsocks-libev
+    ./configure --prefix=/usr
+    make && make install
+    mkdir -p /etc/shadowsocks-libev
+    cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
+    cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
+    chmod +x /etc/init.d/shadowsocks-libev
 
-#config setting
-echo "#############################################################"
-echo "#"
-echo "# Please input your shadowsocks server_port and password"
-echo "#"
-echo "#############################################################"
-echo ""
-echo "input server_port(443 is suggested):"
-read serverport
-echo "input password:"
-read shadowsockspwd
+    # Get IP address(Default No.1)
+    IP=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
+    if [ -z $IP ]; then
+        IP=`curl -s ifconfig.me/ip`
+    fi
 
-# Config shadowsocks
+    #config setting
+    echo "#############################################################"
+    echo "#"
+    echo "# Please input your shadowsocks server_port and password"
+    echo "#"
+    echo "#############################################################"
+    echo ""
+    echo "input server_port(443 is suggested):"
+    read serverport
+    echo "input password:"
+    read shadowsockspwd
+
+    #config shadowsocks
 cat > /etc/shadowsocks-libev/config.json<<-EOF
 {
     "server":"${IP}",
@@ -87,20 +120,21 @@ cat > /etc/shadowsocks-libev/config.json<<-EOF
 }
 EOF
 
-#aotustart configuration
-update-rc.d shadowsocks-libev defaults
+    #aotustart configuration
+    update-rc.d shadowsocks-libev defaults
 
-#start service
-/etc/init.d/shadowsocks-libev start
+    #start service
+    /etc/init.d/shadowsocks-libev start
 
-#if failed, start again --debian8 specified
-if [ $? -ne 0 ];then
-#failure indication
-    echo ""
-    echo "Sorry, shadowsocks-libev install failed!"
-    echo "Please contact with admin@tennfy.com"
-else
-#success indication
+    #if failed, start again --debian8 specified
+    if [ $? -ne 0 ]
+	then
+    #failure indication
+        echo ""
+        echo "Sorry, shadowsocks-libev install failed!"
+        echo "Please contact with admin@tennfy.com"
+    else	
+    #success indication
     echo ""
     echo "Congratulations, shadowsocks-libev install completed!"
     echo -e "Your Server IP: ${IP}"
@@ -108,59 +142,60 @@ else
     echo -e "Your Password: ${shadowsockspwd}"
     echo -e "Your Local Port: 1080"
     echo -e "Your Encryption Method:rc4-md5"
-fi
+    fi
 }
 
 ############################### uninstall function##################################
-function uninstall_shadowsocks_tennfy(){
-#change the dir to shadowsocks-libev
-cd $HOME
-cd shadowsocks-libev
+function UninstallShadowsocks()
+{
+    #change the dir to shadowsocks-libev
+    cd $HOME
+    cd shadowsocks-libev
 
-#stop shadowsocks-libev process
-/etc/init.d/shadowsocks-libev stop
+    #stop shadowsocks-libev process
+    /etc/init.d/shadowsocks-libev stop
 
-#uninstall shadowsocks-libev
-make uninstall
-make clean
-cd ..
-rm -rf shadowsocks-libev
+    #uninstall shadowsocks-libev
+    make uninstall
+    make clean
+    cd ..
+    rm -rf shadowsocks-libev
 
-# delete config file
-rm -rf /etc/shadowsocks-libev
+    #delete config file
+    rm -rf /etc/shadowsocks-libev
 
-# delete shadowsocks-libev init file
-rm -f /etc/init.d/shadowsocks-libev
-rm -f /etc/default/shadowsocks-libev
+    #delete shadowsocks-libev init file
+    rm -f /etc/init.d/shadowsocks-libev
+    rm -f /etc/default/shadowsocks-libev
 
-#delete start with boot
-update-rc.d -f shadowsocks-libev remove
+    #delete start with boot
+    update-rc.d -f shadowsocks-libev remove
 
-echo "Shadowsocks-libev uninstall success!"
-
+    echo "Shadowsocks-libev uninstall success!"
 }
 
 ############################### update function##################################
-function update_shadowsocks_tennfy(){
-     uninstall_shadowsocks_tennfy
-     install_shadowsocks_tennfy
-	 echo "Shadowsocks-libev update success!"
+function UpdateShadowsocks()
+{
+    UninstallShadowsocks
+    InstallShadowsocks
+    echo "Shadowsocks-libev update success!"
 }
 ############################### Initialization##################################
 # Make sure only root can run our script
-check_sanity
+CheckSanity
 
 action=$1
 [  -z $1 ] && action=install
 case "$action" in
 install)
-    install_shadowsocks_tennfy
+    InstallShadowsocks
     ;;
 uninstall)
-    uninstall_shadowsocks_tennfy
+    UninstallShadowsocks
     ;;
 update)
-    update_shadowsocks_tennfy
+    UpdateShadowsocks
     ;;	
 *)
     echo "Arguments error! [${action} ]"
