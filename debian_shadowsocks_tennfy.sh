@@ -17,7 +17,7 @@ echo '-----------------------------------------------------------------'
 CEND="\033[0m"
 CMSG="\033[1;36m"
 CFAILURE="\033[1;31m"
-CSUCCESS="\033[32m"
+CSUCCESS="\033[1;32m"
 CWARNING="\033[1;33m"
 
 function Die()
@@ -206,6 +206,10 @@ function InstallShadowsocks()
 	
     echo "input password:"
     read shadowsocks_pwd
+
+	echo ''
+	echo '-----------------------------------------------------------------'
+	echo ''
 
     #config shadowsocks
 cat > /etc/shadowsocks-libev/config.json<<-EOF
