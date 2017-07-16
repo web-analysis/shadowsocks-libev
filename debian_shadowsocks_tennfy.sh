@@ -67,7 +67,7 @@ function InstallShadowsocks()
 
     #install
     apt-get update
-    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev libudns-dev automake
+    apt-get install -y --force-yes gettext gcc build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev libudns-dev automake
 
     #install Libsodium
     InstallLibsodium
@@ -87,8 +87,6 @@ function InstallShadowsocks()
     mkdir -p /etc/shadowsocks-libev
     cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
     cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
-    #fix debian8 bind() error
-    cap_net_bind_service+ep /usr/bin/ss-server
     chmod +x /etc/init.d/shadowsocks-libev
 
     # Get IP address(Default No.1)
@@ -104,7 +102,7 @@ function InstallShadowsocks()
     echo "#"
     echo "#############################################################"
     echo ""
-    echo "input server_port(443 is suggested):"
+    echo "input server_port(8000 is suggested):"
     read serverport
     echo "input password:"
     read shadowsockspwd
