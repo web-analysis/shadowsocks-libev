@@ -83,7 +83,7 @@ function InstallShadowsocks()
 
     #compile install
     cd shadowsocks-libev
-    ./autogen.sh && ./configure --prefix=/usr && make && make install
+    ./configure --prefix=/usr && make && make install
     mkdir -p /etc/shadowsocks-libev
     cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
     cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
