@@ -5,13 +5,19 @@
 #   Author: tennfy <admin@tennfy.com>
 #   Intro:  http://www.tennfy.com
 #===============================================================================================
-
+export PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 clear
 echo '-----------------------------------------------------------------'
 echo '   Install Shadowsocks(libev) for debian or ubuntu (32bit/64bit) '
 echo '   Intro:  http://www.tennfy.com                                 '
 echo '   Author: tennfy <admin@tennfy.com>                             '
 echo '-----------------------------------------------------------------'
+
+#Variables
+ShadowsocksDir='/opt/shadowsocks'
+
+#Version
+ShadowsocksVersion='3.0.7'
 
 #color
 CEND="\033[0m"
@@ -58,11 +64,11 @@ function InstallLibudns()
 {
     export LIBUDNS_VER=0.4
     wget http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
-    tar xvf udns-$LIBUDNS_VER.tar.gz
-    pushd udns-$LIBUDNS_VER
-    ./configure && make \
-	&& cp udns.h /usr/include/ \
-	&& cp libudns.a /usr/lib/ 
+    tar -zxvf udns-$LIBUDNS_VER.tar.gz -C ${ShadowsocksDir}/packages
+    pushd ${ShadowsocksDir}/packages/udns-$LIBUDNS_VER	
+    ./configure && make && \
+	cp udns.h /usr/include/ && \
+	cp libudns.a /usr/lib/ 
     if [ $? -ne 0 ]
     then
     #failure indication
@@ -76,8 +82,8 @@ function InstallLibsodium()
 {
     export LIBSODIUM_VER=1.0.12
     wget --no-check-certificate https://github.com/jedisct1/libsodium/releases/download/$LIBSODIUM_VER/libsodium-$LIBSODIUM_VER.tar.gz
-    tar xvf libsodium-$LIBSODIUM_VER.tar.gz
-    pushd libsodium-$LIBSODIUM_VER
+    tar -zxvf libsodium-$LIBSODIUM_VER.tar.gz -C ${ShadowsocksDir}/packages
+    pushd ${ShadowsocksDir}/packages/libsodium-$LIBSODIUM_VER
     ./configure --prefix=/usr && make && make install
 	if [ $? -ne 0 ]
 	then
@@ -92,8 +98,8 @@ function InstallMbedtls()
 {
     export MBEDTLS_VER=2.5.1
     wget --no-check-certificate https://tls.mbed.org/download/mbedtls-$MBEDTLS_VER-gpl.tgz
-    tar xvf mbedtls-$MBEDTLS_VER-gpl.tgz
-    pushd mbedtls-$MBEDTLS_VER
+	tar -zxvf mbedtls-$MBEDTLS_VER-gpl.tgz -C ${ShadowsocksDir}/packages
+    pushd ${ShadowsocksDir}/packages/mbedtls-$MBEDTLS_VER	
     make SHARED=1 CFLAGS=-fPIC && make DESTDIR=/usr install
 	if [ $? -ne 0 ]
 	then
@@ -107,10 +113,9 @@ function InstallMbedtls()
 function InstallShadowsocksLibev()
 {
     #download latest release version of shadowsocks-libev
-    export LatestRlsVer="3.0.7"
-    wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${LatestRlsVer}/shadowsocks-libev-${LatestRlsVer}.tar.gz
-    tar zxvf shadowsocks-libev-${LatestRlsVer}.tar.gz 
-    pushd shadowsocks-libev-${LatestRlsVer}
+    wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${ShadowsocksVersion}/shadowsocks-libev-${ShadowsocksVersion}.tar.gz
+    tar zxvf shadowsocks-libev-${ShadowsocksVersion}.tar.gz -C ${ShadowsocksDir}/packages
+    pushd /ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
     ./configure --prefix=/usr && make && make install
 	if [ $? -ne 0 ]
 	then
@@ -129,12 +134,28 @@ function InstallShadowsocksLibev()
 	
     chmod +x /etc/init.d/shadowsocks-libev
 	popd
-	rm -f shadowsocks-libev-${LatestRlsVer}.tar.gz 
+	rm -f shadowsocks-libev-${ShadowsocksVersion}.tar.gz 
+}
+function Init()
+{	
+	cd /root
+	
+    # create packages and conf directory
+	if [ ! -d ${ShadowsocksDir} ]
+	then 
+	    mkdir ${ShadowsocksDir}
+		mkdir ${ShadowsocksDir}/packages
+		mkdir ${ShadowsocksDir}/conf
+	fi
+	
+	#init system
+	CheckSanity
 }
 ############################### install function##################################
 function InstallShadowsocks()
 {
-    cd $HOME
+	#initialize
+    Init
 
     #install
     apt-get update
@@ -259,8 +280,7 @@ EOF
 function UninstallShadowsocks()
 {
     #change the dir to shadowsocks-libev
-    cd $HOME
-    cd shadowsocks-libev
+    cd /ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
 
     #stop shadowsocks-libev process
     /etc/init.d/shadowsocks-libev stop
@@ -268,8 +288,10 @@ function UninstallShadowsocks()
     #uninstall shadowsocks-libev
     make uninstall
     make clean
-    cd ..
-    rm -rf shadowsocks-libev
+	
+    cd /root
+	
+    rm -rf /ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
 
     #delete configuration file
     rm -rf /etc/shadowsocks-libev
@@ -291,9 +313,6 @@ function UpdateShadowsocks()
     echo "Shadowsocks-libev update success!"
 }
 ############################### Initialization##################################
-# Make sure only root can run our script
-CheckSanity
-
 action=$1
 [ -z $1 ] && action=install
 case "$action" in
