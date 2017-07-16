@@ -87,6 +87,8 @@ function InstallShadowsocks()
     mkdir -p /etc/shadowsocks-libev
     cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
     cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
+    #fix debian8 bind() error
+    cap_net_bind_service+ep /usr/bin/ss-server
     chmod +x /etc/init.d/shadowsocks-libev
 
     # Get IP address(Default No.1)
