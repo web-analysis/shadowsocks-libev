@@ -42,10 +42,13 @@ function InstallLibudns()
     wget http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
     tar xvf udns-$LIBUDNS_VER.tar.gz
     pushd udns-$LIBUDNS_VER
-    ./configure --prefix=/usr && make 
+    ./configure && make 
 	make install
+	cp udns.h /usr/include/
+	cp libudns.a /usr/lib/
     popd
     ldconfig
+	rm -f udns-$LIBUDNS_VER.tar.gz
 }
 
 function InstallLibsodium()
@@ -58,6 +61,7 @@ function InstallLibsodium()
 	make install
     popd
     ldconfig
+	rm -f libsodium-$LIBSODIUM_VER.tar.gz
 }
 
 function InstallMbedtls()
@@ -70,6 +74,7 @@ function InstallMbedtls()
     make DESTDIR=/usr install
     popd
     ldconfig
+	rm -f mbedtls-$MBEDTLS_VER-gpl.tgz
 }
 
 ############################### install function##################################
