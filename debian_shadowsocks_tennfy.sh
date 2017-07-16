@@ -61,8 +61,8 @@ function InstallLibudns()
     tar xvf udns-$LIBUDNS_VER.tar.gz
     pushd udns-$LIBUDNS_VER
     ./configure && make \
-	&& udns.h /usr/include/ \
-	&& libudns.a /usr/lib/ 
+	&& cp udns.h /usr/include/ \
+	&& cp libudns.a /usr/lib/ 
     if [ $? -ne 0 ]
     then
     #failure indication
