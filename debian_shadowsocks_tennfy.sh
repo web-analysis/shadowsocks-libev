@@ -112,10 +112,17 @@ function InstallMbedtls()
 }
 function InstallShadowsocksLibev()
 {
+	#install Libsodium
+    InstallLibudns
+    #install Libsodium
+    InstallLibsodium 
+    #install MbedTLS
+    InstallMbedtls
+	
     #download latest release version of shadowsocks-libev
     wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${ShadowsocksVersion}/shadowsocks-libev-${ShadowsocksVersion}.tar.gz
     tar zxvf shadowsocks-libev-${ShadowsocksVersion}.tar.gz -C ${ShadowsocksDir}/packages
-    pushd /ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
+    pushd ${ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
     ./configure --prefix=/usr && make && make install
 	if [ $? -ne 0 ]
 	then
@@ -156,20 +163,11 @@ function InstallShadowsocks()
 {
 	#initialize
     Init
-
+	
     #install
     apt-get update
     apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev automake
-
-	#install Libsodium
-    InstallLibudns
 	
-    #install Libsodium
-    InstallLibsodium
-    
-    #install MbedTLS
-    InstallMbedtls
-
     #install shadowsocks libev
 	InstallShadowsocksLibev
 	
@@ -279,19 +277,20 @@ EOF
 ############################### uninstall function##################################
 function UninstallShadowsocks()
 {
-    #change the dir to shadowsocks-libev
-    cd /ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
-
     #stop shadowsocks-libev process
     /etc/init.d/shadowsocks-libev stop
 
-    #uninstall shadowsocks-libev
-    make uninstall
+	#uninstall shadowsocks-libev
+	update-rc.d -f shadowsocks-libev remove 
+
+    #change the dir to shadowsocks-libev
+    cd ${ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
+	make uninstall
     make clean
+	cd /root
 	
-    cd /root
-	
-    rm -rf /ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
+    #delete all install files
+	rm -rf ${ShadowsocksDir}   
 
     #delete configuration file
     rm -rf /etc/shadowsocks-libev
@@ -299,9 +298,6 @@ function UninstallShadowsocks()
     #delete shadowsocks-libev init file
     rm -f /etc/init.d/shadowsocks-libev
     rm -f /etc/default/shadowsocks-libev
-
-    #remove system startup
-    update-rc.d -f shadowsocks-libev remove
 
     echo -e "${CSUCCESS}Shadowsocks uninstall success!${CEND}"
 }
