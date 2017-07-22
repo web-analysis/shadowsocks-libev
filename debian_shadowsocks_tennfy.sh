@@ -78,6 +78,8 @@ function InstallLibudns()
 {
     wget http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
     tar -zxvf udns-$LIBUDNS_VER.tar.gz -C ${ShadowsocksDir}/packages
+	rm -f udns-$LIBUDNS_VER.tar.gz
+	
     pushd ${ShadowsocksDir}/packages/udns-$LIBUDNS_VER	
     ./configure && make && \
 	cp udns.h /usr/include/ && \
@@ -88,13 +90,14 @@ function InstallLibudns()
         Die "Libudns installation failed!"
     fi
     popd
-    ldconfig
-	rm -f udns-$LIBUDNS_VER.tar.gz
+    ldconfig	
 }
 function InstallLibsodium()
 {
     wget --no-check-certificate https://github.com/jedisct1/libsodium/releases/download/$LIBSODIUM_VER/libsodium-$LIBSODIUM_VER.tar.gz
     tar -zxvf libsodium-$LIBSODIUM_VER.tar.gz -C ${ShadowsocksDir}/packages
+	rm -f libsodium-$LIBSODIUM_VER.tar.gz
+	
     pushd ${ShadowsocksDir}/packages/libsodium-$LIBSODIUM_VER
     ./configure --prefix=/usr && make && make install
 	if [ $? -ne 0 ]
@@ -103,13 +106,14 @@ function InstallLibsodium()
         Die "Libsodium installation failed!"
     fi
     popd
-    ldconfig
-	rm -f libsodium-$LIBSODIUM_VER.tar.gz
+    ldconfig	
 }
 function InstallMbedtls()
 {
     wget --no-check-certificate https://tls.mbed.org/download/mbedtls-$MBEDTLS_VER-gpl.tgz
 	tar -zxvf mbedtls-$MBEDTLS_VER-gpl.tgz -C ${ShadowsocksDir}/packages
+	rm -f mbedtls-$MBEDTLS_VER-gpl.tgz
+	
     pushd ${ShadowsocksDir}/packages/mbedtls-$MBEDTLS_VER	
     make SHARED=1 CFLAGS=-fPIC && make DESTDIR=/usr install
 	if [ $? -ne 0 ]
@@ -118,8 +122,7 @@ function InstallMbedtls()
         Die "Mbedtls installation failed!"
     fi
     popd
-    ldconfig
-	rm -f mbedtls-$MBEDTLS_VER-gpl.tgz
+    ldconfig	
 }
 function InstallShadowsocksLibev()
 {
@@ -136,6 +139,8 @@ function InstallShadowsocksLibev()
     #download latest release version of shadowsocks-libev
     wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${ShadowsocksVersion}/shadowsocks-libev-${ShadowsocksVersion}.tar.gz
     tar zxvf shadowsocks-libev-${ShadowsocksVersion}.tar.gz -C ${ShadowsocksDir}/packages
+	rm -f shadowsocks-libev-${ShadowsocksVersion}.tar.gz 
+	
 	mv ${ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion} ${ShadowsocksDir}/packages/shadowsocks-libev
     pushd ${ShadowsocksDir}/packages/shadowsocks-libev
     ./configure --prefix=/usr && make && make install
@@ -155,8 +160,7 @@ function InstallShadowsocksLibev()
 	sed -i '/nogroup/d' /etc/init.d/shadowsocks-libev
 	
     chmod +x /etc/init.d/shadowsocks-libev
-	popd
-	rm -f shadowsocks-libev-${ShadowsocksVersion}.tar.gz 
+	popd	
 }
 function Init()
 {	
