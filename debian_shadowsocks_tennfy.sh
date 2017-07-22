@@ -65,7 +65,7 @@ function GetDebianVersion()
 }
 function GetLatestShadowsocksVersion()
 {
-	lcoal shadowsocksurl=`curl -s https://api.github.com/repos/shadowsocks/shadowsocks-libev/releases/latest | grep tag_name | cut -d '"' -f 4`
+	local shadowsocksurl=`curl -s https://api.github.com/repos/shadowsocks/shadowsocks-libev/releases/latest | grep tag_name | cut -d '"' -f 4`
 	
 	if [$? -ne 0]
 	then
