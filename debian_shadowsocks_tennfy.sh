@@ -143,7 +143,7 @@ function InstallShadowsocksLibev()
 	
 	mv ${ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion} ${ShadowsocksDir}/packages/shadowsocks-libev
     pushd ${ShadowsocksDir}/packages/shadowsocks-libev
-    ./configure --prefix=/usr && make && make install
+    ./configure --prefix=/usr --disable-documentation && make && make install
 	if [ $? -ne 0 ]
 	then
     #failure indication
@@ -186,7 +186,7 @@ function InstallShadowsocks()
 	
     #install
     apt-get update
-    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev automake curl
+    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev libev-dev automake curl
 	
     #install shadowsocks libev
 	InstallShadowsocksLibev
