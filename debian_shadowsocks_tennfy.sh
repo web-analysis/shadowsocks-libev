@@ -136,7 +136,8 @@ function InstallShadowsocksLibev()
     #download latest release version of shadowsocks-libev
     wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${ShadowsocksVersion}/shadowsocks-libev-${ShadowsocksVersion}.tar.gz
     tar zxvf shadowsocks-libev-${ShadowsocksVersion}.tar.gz -C ${ShadowsocksDir}/packages
-    pushd ${ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
+	mv ${ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion} ${ShadowsocksDir}/packages/shadowsocks-libev
+    pushd ${ShadowsocksDir}/packages/shadowsocks-libev
     ./configure --prefix=/usr && make && make install
 	if [ $? -ne 0 ]
 	then
@@ -304,10 +305,10 @@ function UninstallShadowsocks()
 	update-rc.d -f shadowsocks-libev remove 
 
     #change the dir to shadowsocks-libev
-    cd ${ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion}
+    pushd ${ShadowsocksDir}/packages/shadowsocks-libev
 	make uninstall
     make clean
-	cd /root
+	popd
 	
     #delete all install files
 	rm -rf ${ShadowsocksDir}   
