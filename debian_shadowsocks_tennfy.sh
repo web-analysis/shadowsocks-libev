@@ -67,7 +67,7 @@ function GetLatestShadowsocksVersion()
 {
 	local shadowsocksurl=`curl -s https://api.github.com/repos/shadowsocks/shadowsocks-libev/releases/latest | grep tag_name | cut -d '"' -f 4`
 	
-	if [$? -ne 0]
+	if [ $? -ne 0 ]
 	then
 	    Die "Get latest shadowsocks version failed!"
 	else
