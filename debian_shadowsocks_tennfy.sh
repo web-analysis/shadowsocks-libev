@@ -17,7 +17,10 @@ echo '-----------------------------------------------------------------'
 ShadowsocksDir='/opt/shadowsocks'
 
 #Version
-ShadowsocksVersion='3.0.7'
+ShadowsocksVersion=''
+LIBUDNS_VER='0.4'
+LIBSODIUM_VER='1.0.12'
+MBEDTLS_VER='2.5.1'
 
 #color
 CEND="\033[0m"
@@ -60,9 +63,19 @@ function GetDebianVersion()
 		return 1
 	fi    	
 }
+function GetLatestShadowsocksVersion()
+{
+	lcoal shadowsocksurl=`curl -s https://api.github.com/repos/shadowsocks/shadowsocks-libev/releases/latest | grep tag_name | cut -d '"' -f 4`
+	
+	if [$? -ne 0]
+	then
+	    Die "Get latest shadowsocks version failed!"
+	else
+	    ShadowsocksVersion=`echo $shadowsocksurl|sed 's/v//g'`
+	fi
+}
 function InstallLibudns()
 {
-    export LIBUDNS_VER=0.4
     wget http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
     tar -zxvf udns-$LIBUDNS_VER.tar.gz -C ${ShadowsocksDir}/packages
     pushd ${ShadowsocksDir}/packages/udns-$LIBUDNS_VER	
@@ -80,7 +93,6 @@ function InstallLibudns()
 }
 function InstallLibsodium()
 {
-    export LIBSODIUM_VER=1.0.12
     wget --no-check-certificate https://github.com/jedisct1/libsodium/releases/download/$LIBSODIUM_VER/libsodium-$LIBSODIUM_VER.tar.gz
     tar -zxvf libsodium-$LIBSODIUM_VER.tar.gz -C ${ShadowsocksDir}/packages
     pushd ${ShadowsocksDir}/packages/libsodium-$LIBSODIUM_VER
@@ -96,7 +108,6 @@ function InstallLibsodium()
 }
 function InstallMbedtls()
 {
-    export MBEDTLS_VER=2.5.1
     wget --no-check-certificate https://tls.mbed.org/download/mbedtls-$MBEDTLS_VER-gpl.tgz
 	tar -zxvf mbedtls-$MBEDTLS_VER-gpl.tgz -C ${ShadowsocksDir}/packages
     pushd ${ShadowsocksDir}/packages/mbedtls-$MBEDTLS_VER	
@@ -118,6 +129,9 @@ function InstallShadowsocksLibev()
     InstallLibsodium 
     #install MbedTLS
     InstallMbedtls
+	
+    #get latest shadowsocks-libev release version
+	GetLatestShadowsocksVersion
 	
     #download latest release version of shadowsocks-libev
     wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${ShadowsocksVersion}/shadowsocks-libev-${ShadowsocksVersion}.tar.gz
@@ -148,13 +162,14 @@ function Init()
 	cd /root
 	
     # create packages and conf directory
-	if [ ! -d ${ShadowsocksDir} ]
+	if [ -d ${ShadowsocksDir} ]
 	then 
-	    mkdir ${ShadowsocksDir}
-		mkdir ${ShadowsocksDir}/packages
-		mkdir ${ShadowsocksDir}/conf
+	    rm -rf ${ShadowsocksDir}	
 	fi
-	
+	mkdir ${ShadowsocksDir}
+	mkdir ${ShadowsocksDir}/packages
+	mkdir ${ShadowsocksDir}/conf
+
 	#init system
 	CheckSanity
 }
@@ -166,7 +181,7 @@ function InstallShadowsocks()
 	
     #install
     apt-get update
-    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev automake
+    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev asciidoc xmlto libev-dev automake curl
 	
     #install shadowsocks libev
 	InstallShadowsocksLibev
@@ -195,27 +210,32 @@ function InstallShadowsocks()
 	while :
 	do
 		echo 'Please select encrypt method:'
-		echo -e "\t${CMSG}1${CEND}. AES-256-CFB"
-		echo -e "\t${CMSG}2${CEND}. RC4-MD5"
-		echo -e "\t${CMSG}3${CEND}. CHACHA20"
+		echo -e "\t${CMSG}1${CEND}. AEAD_CHACHA20_POLY1305"
+		echo -e "\t${CMSG}2${CEND}. AEAD_AES_256_GCM"
+		echo -e "\t${CMSG}3${CEND}. AEAD_AES_192_GCM"
+		echo -e "\t${CMSG}4${CEND}. AEAD_AES_128_GCM"
 		read -p "Please input a number:(Default 1 press Enter) " encrypt_method_num
-		[ -z "$encrypt_method_num" ] && encrypt_method_num=2
-		if [[ ! $encrypt_method_num =~ ^[1-3]$ ]]
+		[ -z "$encrypt_method_num" ] && encrypt_method_num=1
+		if [[ ! $encrypt_method_num =~ ^[1-4]$ ]]
 		then
-			echo "${CWARNING} input error! Please only input number 1,2,3 ${CEND}"
+			echo "${CWARNING} input error! Please only input number 1,2,3,4 ${CEND}"
 		else
 			if [ "$encrypt_method_num" == '1' ]
 			then
-				encrypt_method='aes-256-cfb'
+				encrypt_method='chacha20-ietf-poly1305'
 			fi
 			if [ "$encrypt_method_num" == '2' ]
 			then
-				encrypt_method='rc4-md5'
+				encrypt_method='aes-256-gcm'
 			fi
 			if [ "$encrypt_method_num" == '3' ]
 			then
-				encrypt_method='chacha20'
+				encrypt_method='aes-192-gcm'
 			fi
+			if [ "$encrypt_method_num" == '4' ]
+			then
+				encrypt_method='aes-128-gcm'
+			fi			
 			break
 		fi
 	done
@@ -306,7 +326,7 @@ function UpdateShadowsocks()
 {
     UninstallShadowsocks
     InstallShadowsocks
-    echo "Shadowsocks-libev update success!"
+    echo -e "${CSUCCESS}Shadowsocks-libev update success!${CEND}"
 }
 ############################### Initialization##################################
 action=$1
