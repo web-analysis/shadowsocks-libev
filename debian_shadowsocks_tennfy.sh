@@ -220,11 +220,11 @@ function UninstallShadowsocksCore()
 	rm -rf ${ShadowsocksDir}   
 
     #delete configuration file
-    rm -rf /etc/shadowsocks-libev
+    rm -rf /etc/${ShadowsocksType}
 
     #delete shadowsocks-libev init file
-    rm -f /etc/init.d/shadowsocks-libev
-    rm -f /etc/default/shadowsocks-libev
+    rm -f /etc/init.d/${ShadowsocksType}
+    rm -f /etc/default/${ShadowsocksType}
 }
 function Init()
 {	
