@@ -14,6 +14,7 @@ echo '   Author: tennfy <admin@tennfy.com>                             '
 echo '-----------------------------------------------------------------'
 
 #Variables
+ShadowsocksType='shadowsocks-libev'
 ShadowsocksDir='/opt/shadowsocks'
 
 #Version
@@ -21,6 +22,14 @@ ShadowsocksVersion=''
 LIBUDNS_VER='0.4'
 LIBSODIUM_VER='1.0.12'
 MBEDTLS_VER='2.5.1'
+
+#ciphers
+Ciphers=(
+chacha20-ietf-poly1305
+aes-256-gcm
+aes-192-gcm
+aes-128-gcm
+)
 
 #color
 CEND="\033[0m"
@@ -60,8 +69,35 @@ function GetDebianVersion()
 			return 1
 		fi
 	else
-		return 1
+		Die "Distribution is not supported"
 	fi    	
+}
+function GetSystemBit()
+{
+	ldconfig
+	if [ $(getconf WORD_BIT) = '32' ] && [ $(getconf LONG_BIT) = '64' ] 
+	then
+		if [ '64' = $1 ]; then
+		    return 0
+		else
+		    return 1
+		fi			
+	else
+		if [ '32' = $1 ]; then
+		    return 0
+		else
+		    return 1
+		fi		
+	fi
+}
+function CheckServerPort()
+{
+    if [ $1 -ge 1 ] && [ $1 -le 65535 ]
+	then 
+	    return 0
+	else
+	    return 1
+	fi
 }
 function GetLatestShadowsocksVersion()
 {
@@ -124,8 +160,12 @@ function InstallMbedtls()
     popd
     ldconfig	
 }
-function InstallShadowsocksLibev()
+function InstallShadowsocksCore()
 {
+    #install
+    apt-get update
+    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev libev-dev automake curl
+	
 	#install Libsodium
     InstallLibudns
     #install Libsodium
@@ -149,24 +189,48 @@ function InstallShadowsocksLibev()
     #failure indication
         Die "Shadowsocks-libev installation failed!"
     fi	
-    mkdir -p /etc/shadowsocks-libev
-    cp ./debian/shadowsocks-libev.init /etc/init.d/shadowsocks-libev
-    cp ./debian/shadowsocks-libev.default /etc/default/shadowsocks-libev
+    mkdir -p /etc/${ShadowsocksType}
+    cp ./debian/shadowsocks-libev.init /etc/init.d/${ShadowsocksType}
+    cp ./debian/shadowsocks-libev.default /etc/default/${ShadowsocksType}
 	
 	#fix bind() problem without root user
-	sed -i '/nobody/i\USER="root"' /etc/init.d/shadowsocks-libev
-	sed -i '/nobody/i\GROUP="root"' /etc/init.d/shadowsocks-libev
-	sed -i '/nobody/d' /etc/init.d/shadowsocks-libev
-	sed -i '/nogroup/d' /etc/init.d/shadowsocks-libev
+	sed -i '/nobody/i\USER="root"' /etc/init.d/${ShadowsocksType}
+	sed -i '/nobody/i\GROUP="root"' /etc/init.d/${ShadowsocksType}
+	sed -i '/nobody/d' /etc/init.d/${ShadowsocksType}
+	sed -i '/nogroup/d' /etc/init.d/${ShadowsocksType}
 	
-    chmod +x /etc/init.d/shadowsocks-libev
+    chmod +x /etc/init.d/${ShadowsocksType}
 	popd	
+}
+function UninstallShadowsocksCore()
+{
+    #stop shadowsocks-libev process
+    /etc/init.d/${ShadowsocksType} stop
+
+	#uninstall shadowsocks-libev
+	update-rc.d -f ${ShadowsocksType} remove 
+
+    #change the dir to shadowsocks-libev
+    pushd ${ShadowsocksDir}/packages/shadowsocks-libev
+	make uninstall
+    make clean
+	popd
+	
+    #delete all install files
+	rm -rf ${ShadowsocksDir}   
+
+    #delete configuration file
+    rm -rf /etc/shadowsocks-libev
+
+    #delete shadowsocks-libev init file
+    rm -f /etc/init.d/shadowsocks-libev
+    rm -f /etc/default/shadowsocks-libev
 }
 function Init()
 {	
 	cd /root
 	
-    # create packages and conf directory
+    #create packages and conf directory
 	if [ -d ${ShadowsocksDir} ]
 	then 
 	    rm -rf ${ShadowsocksDir}	
@@ -184,14 +248,10 @@ function InstallShadowsocks()
 	#initialize
     Init
 	
-    #install
-    apt-get update
-    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev libev-dev automake curl
+    #install shadowsocks core program
+	InstallShadowsocksCore
 	
-    #install shadowsocks libev
-	InstallShadowsocksLibev
-	
-    # Get IP address(Default No.1)
+    # Get IP address(Default No.1)	
     ip=`curl -s checkip.dyndns.com | cut -d' ' -f 6  | cut -d'<' -f 1`
     if [ -z $ip ]; then
         ip=`curl -s ifconfig.me/ip`
@@ -204,8 +264,17 @@ function InstallShadowsocks()
     echo '-----------------------------------------------------------------'
     echo ''
 	#input server port
-    read -p "input server port(443 is default): " server_port
-	[ -z ${server_port} ] && server_port=443
+	while :
+	do
+        read -p "input server port(443 is default): " server_port
+		[ -z "$server_port" ] && server_port=443
+        if CheckServerPort $(($server_port))
+		then
+		    break
+		else
+		    echo -e "${CFAILURE}[Error] The server port should be between 1 to 65535! ${CEND}"
+		fi
+	done
 	
 	echo ''
 	echo '-----------------------------------------------------------------'
@@ -215,32 +284,19 @@ function InstallShadowsocks()
 	while :
 	do
 		echo 'Please select encrypt method:'
-		echo -e "\t${CMSG}1${CEND}. AEAD_CHACHA20_POLY1305"
-		echo -e "\t${CMSG}2${CEND}. AEAD_AES_256_GCM"
-		echo -e "\t${CMSG}3${CEND}. AEAD_AES_192_GCM"
-		echo -e "\t${CMSG}4${CEND}. AEAD_AES_128_GCM"
+        i=1
+		for var in "${Ciphers[@]}"
+		do
+            echo -e "\t${CMSG}${i}${CEND}. ${var}"
+			let i++
+        done
 		read -p "Please input a number:(Default 1 press Enter) " encrypt_method_num
 		[ -z "$encrypt_method_num" ] && encrypt_method_num=1
-		if [[ ! $encrypt_method_num =~ ^[1-4]$ ]]
+		if [[ ! $encrypt_method_num =~ ^[1-${#Ciphers[@]}]$ ]]
 		then
-			echo "${CWARNING} input error! Please only input number 1,2,3,4 ${CEND}"
+			echo -e "${CWARNING} input error! Please only input number 1~${#Ciphers[@]} ${CEND}"
 		else
-			if [ "$encrypt_method_num" == '1' ]
-			then
-				encrypt_method='chacha20-ietf-poly1305'
-			fi
-			if [ "$encrypt_method_num" == '2' ]
-			then
-				encrypt_method='aes-256-gcm'
-			fi
-			if [ "$encrypt_method_num" == '3' ]
-			then
-				encrypt_method='aes-192-gcm'
-			fi
-			if [ "$encrypt_method_num" == '4' ]
-			then
-				encrypt_method='aes-128-gcm'
-			fi			
+			encrypt_method=${Ciphers[$(let $encrypt_method_num -1)]}			
 			break
 		fi
 	done
@@ -248,15 +304,23 @@ function InstallShadowsocks()
 	echo ''
 	echo '-----------------------------------------------------------------'
 	echo ''
-	
-    read -p "input password: " shadowsocks_pwd     
+	while :
+	do
+        read -p "input password: " shadowsocks_pwd
+	    if [ -z ${shadowsocks_pwd} ]; then
+		    echo -e "${CFAILURE}[Error] The password is null! ${CEND}"
+		else
+            break
+		fi
+	done	
+         
 
 	echo ''
 	echo '-----------------------------------------------------------------'
 	echo ''
 
     #config shadowsocks
-cat > /etc/shadowsocks-libev/config.json<<-EOF
+cat > /etc/${ShadowsocksType}/config.json<<-EOF
 {
     "server":"${ip}",
     "server_port":${server_port},
@@ -268,10 +332,10 @@ cat > /etc/shadowsocks-libev/config.json<<-EOF
 EOF
 
     #add system startup
-    update-rc.d shadowsocks-libev defaults
+    update-rc.d ${ShadowsocksType} defaults
 
     #start service
-    /etc/init.d/shadowsocks-libev start
+    /etc/init.d/${ShadowsocksType} start
 
     #if failed, start again --debian8 specified
     if [ $? -ne 0 ]
@@ -289,7 +353,7 @@ EOF
 		echo ''
         echo '-----------------------------------------------------------------'
 		echo ''
-        echo -e "${CSUCCESS}Congratulations, shadowsocks-libev install completed!${CEND}"
+        echo -e "${CSUCCESS}Congratulations, ${ShadowsocksType} install completed!${CEND}"
         echo -e "Your Server IP: ${ip}"
         echo -e "Your Server Port: ${server_port}"
         echo -e "Your Password: ${shadowsocks_pwd}"
@@ -302,36 +366,15 @@ EOF
 ############################### uninstall function##################################
 function UninstallShadowsocks()
 {
-    #stop shadowsocks-libev process
-    /etc/init.d/shadowsocks-libev stop
-
-	#uninstall shadowsocks-libev
-	update-rc.d -f shadowsocks-libev remove 
-
-    #change the dir to shadowsocks-libev
-    pushd ${ShadowsocksDir}/packages/shadowsocks-libev
-	make uninstall
-    make clean
-	popd
-	
-    #delete all install files
-	rm -rf ${ShadowsocksDir}   
-
-    #delete configuration file
-    rm -rf /etc/shadowsocks-libev
-
-    #delete shadowsocks-libev init file
-    rm -f /etc/init.d/shadowsocks-libev
-    rm -f /etc/default/shadowsocks-libev
-
-    echo -e "${CSUCCESS}Shadowsocks uninstall success!${CEND}"
+    UninstallShadowsocksCore
+    echo -e "${CSUCCESS}${ShadowsocksType} uninstall success!${CEND}"
 }
 ############################### update function##################################
 function UpdateShadowsocks()
 {
     UninstallShadowsocks
     InstallShadowsocks
-    echo -e "${CSUCCESS}Shadowsocks-libev update success!${CEND}"
+    echo -e "${CSUCCESS}${ShadowsocksType} update success!${CEND}"
 }
 ############################### Initialization##################################
 action=$1
