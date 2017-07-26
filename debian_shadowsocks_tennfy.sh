@@ -71,7 +71,7 @@ function PackageInstall()
 }
 function Download()
 {
-	wget --no-check-certificate -c -t3 -T60 -O $1
+	wget --no-check-certificate $1
 	if [ $? -ne 0 ]
 	then
 		Die "Fild download failed"
