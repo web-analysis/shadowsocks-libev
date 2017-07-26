@@ -74,7 +74,7 @@ function Download()
 	wget --no-check-certificate $1
 	if [ $? -ne 0 ]
 	then
-		Die "Fild download failed"
+		Die "File download failed"
 	fi
 }
 function GetDebianVersion()
