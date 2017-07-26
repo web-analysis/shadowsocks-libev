@@ -64,7 +64,9 @@ function PackageInstall()
 			echo "[${packages} Installing] ************************************************** >>"
 			apt-get install -y --force-yes $packages 
 			if [ $? -ne 0 ]
+			then
 			     Die "${packages} install failed"
+			fi
     done  
 }
 function Download()
