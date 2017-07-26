@@ -56,6 +56,25 @@ function CheckSanity()
 		Die "Distribution is not supported"
 	fi
 }
+function PackageInstall()
+{
+    apt-get update
+    for package in $*  
+    do  
+			echo "[${packages} Installing] ************************************************** >>"
+			apt-get install -y --force-yes $packages 
+			if [ $? -ne 0 ]
+			     Die "${packages} install failed"
+    done  
+}
+function Download()
+{
+	wget --no-check-certificate -c -t3 -T60 -O $1
+	if [ $? -ne 0 ]
+	then
+		Die "Fild download failed"
+	fi
+}
 function GetDebianVersion()
 {
 	if [ -f /etc/debian_version ]
@@ -112,7 +131,7 @@ function GetLatestShadowsocksVersion()
 }
 function InstallLibudns()
 {
-    wget http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
+    Download http://www.corpit.ru/mjt/udns/udns-$LIBUDNS_VER.tar.gz
     tar -zxvf udns-$LIBUDNS_VER.tar.gz -C ${ShadowsocksDir}/packages
 	rm -f udns-$LIBUDNS_VER.tar.gz
 	
@@ -130,7 +149,7 @@ function InstallLibudns()
 }
 function InstallLibsodium()
 {
-    wget --no-check-certificate https://github.com/jedisct1/libsodium/releases/download/$LIBSODIUM_VER/libsodium-$LIBSODIUM_VER.tar.gz
+    Download https://github.com/jedisct1/libsodium/releases/download/$LIBSODIUM_VER/libsodium-$LIBSODIUM_VER.tar.gz
     tar -zxvf libsodium-$LIBSODIUM_VER.tar.gz -C ${ShadowsocksDir}/packages
 	rm -f libsodium-$LIBSODIUM_VER.tar.gz
 	
@@ -146,7 +165,7 @@ function InstallLibsodium()
 }
 function InstallMbedtls()
 {
-    wget --no-check-certificate https://tls.mbed.org/download/mbedtls-$MBEDTLS_VER-gpl.tgz
+    Download https://tls.mbed.org/download/mbedtls-$MBEDTLS_VER-gpl.tgz
 	tar -zxvf mbedtls-$MBEDTLS_VER-gpl.tgz -C ${ShadowsocksDir}/packages
 	rm -f mbedtls-$MBEDTLS_VER-gpl.tgz
 	
@@ -163,8 +182,7 @@ function InstallMbedtls()
 function InstallShadowsocksCore()
 {
     #install
-    apt-get update
-    apt-get install -y --force-yes gettext build-essential autoconf libtool libpcre3-dev libev-dev automake curl
+    PackageInstall gettext build-essential autoconf libtool libpcre3-dev libev-dev automake curl
 	
 	#install Libsodium
     InstallLibudns
@@ -177,7 +195,7 @@ function InstallShadowsocksCore()
 	GetLatestShadowsocksVersion
 	
     #download latest release version of shadowsocks-libev
-    wget --no-check-certificate https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${ShadowsocksVersion}/shadowsocks-libev-${ShadowsocksVersion}.tar.gz
+    Download https://github.com/shadowsocks/shadowsocks-libev/releases/download/v${ShadowsocksVersion}/shadowsocks-libev-${ShadowsocksVersion}.tar.gz
     tar zxvf shadowsocks-libev-${ShadowsocksVersion}.tar.gz -C ${ShadowsocksDir}/packages
 	rm -f shadowsocks-libev-${ShadowsocksVersion}.tar.gz 
 	
