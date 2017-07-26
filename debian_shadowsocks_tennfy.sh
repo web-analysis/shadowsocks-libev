@@ -61,11 +61,11 @@ function PackageInstall()
     apt-get update
     for package in $*  
     do  
-			echo "[${packages} Installing] ************************************************** >>"
-			apt-get install -y --force-yes $packages 
+			echo "[${package} Installing] ************************************************** >>"
+			apt-get install -y --force-yes $package 
 			if [ $? -ne 0 ]
 			then
-			     Die "${packages} install failed"
+			     Die "${package} install failed"
 			fi
     done  
 }
