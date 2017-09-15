@@ -20,8 +20,8 @@ ShadowsocksDir='/opt/shadowsocks'
 #Version
 ShadowsocksVersion=''
 LIBUDNS_VER='0.4'
-LIBSODIUM_VER='1.0.12'
-MBEDTLS_VER='2.5.1'
+LIBSODIUM_VER='1.0.13'
+MBEDTLS_VER='2.6.0'
 
 #ciphers
 Ciphers=(
@@ -184,10 +184,8 @@ function InstallMbedtls()
 function InstallShadowsocksCore()
 {
     #install
-    PackageInstall gettext build-essential autoconf libtool libpcre3-dev libev-dev automake curl
+    PackageInstall gettext build-essential autoconf libtool libpcre3-dev libev-dev libc-ares-dev automake curl
 	
-	#install Libsodium
-    InstallLibudns
     #install Libsodium
     InstallLibsodium 
     #install MbedTLS
