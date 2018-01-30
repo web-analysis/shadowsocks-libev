@@ -232,6 +232,9 @@ function UninstallShadowsocksCore()
 }
 function Init()
 {	
+	#init system
+	CheckSanity
+	
 	cd /root
 	
     #create packages and conf directory
@@ -241,9 +244,6 @@ function Init()
 	mkdir ${ShadowsocksDir}
 	mkdir ${ShadowsocksDir}/packages
 	mkdir ${ShadowsocksDir}/conf
-
-	#init system
-	CheckSanity
 }
 ############################### install function##################################
 function InstallShadowsocks()
