@@ -46,25 +46,21 @@ function Die()
 function CheckSanity()
 {
 	# Do some sanity checking.
-	if [ $(/usr/bin/id -u) != "0" ]
-	then
+	if [ $(/usr/bin/id -u) != "0" ]; then
 		Die 'Must be run by root user'
 	fi
 
-	if [ ! -f /etc/debian_version ]
-	then
+	if [ ! -f /etc/debian_version ]; then
 		Die "Distribution is not supported"
 	fi
 }
 function PackageInstall()
 {
     apt-get update
-    for package in $*  
-    do  
+    for package in $*; do  
 		echo "[${package} Installing] ************************************************** >>"
 		apt-get install -y --force-yes $package 
-		if [ $? -ne 0 ]
-		then
+		if [ $? -ne 0 ]; then
 			 Die "${package} install failed"
 		fi
     done  
@@ -72,19 +68,16 @@ function PackageInstall()
 function Download()
 {
 	wget --no-check-certificate -c $1
-	if [ $? -ne 0 ]
-	then
+	if [ $? -ne 0 ]; then
 		Die "File download failed"
 	fi
 }
 function GetDebianVersion()
 {
-	if [ -f /etc/debian_version ]
-	then
+	if [ -f /etc/debian_version ]; then
 		local main_version=$1
 		local debian_version=`cat /etc/debian_version|awk -F '.' '{print $1}'`
-		if [ "${main_version}" == "${debian_version}" ]
-		then
+		if [ "${main_version}" == "${debian_version}" ]; then
 		    return 0
 		else 
 			return 1
@@ -96,8 +89,7 @@ function GetDebianVersion()
 function GetSystemBit()
 {
 	ldconfig
-	if [ $(getconf WORD_BIT) = '32' ] && [ $(getconf LONG_BIT) = '64' ] 
-	then
+	if [ $(getconf WORD_BIT) = '32' ] && [ $(getconf LONG_BIT) = '64' ] ; then
 		if [ '64' = $1 ]; then
 		    return 0
 		else
@@ -113,8 +105,7 @@ function GetSystemBit()
 }
 function CheckServerPort()
 {
-    if [ $1 -ge 1 ] && [ $1 -le 65535 ]
-	then 
+    if [ $1 -ge 1 ] && [ $1 -le 65535 ]; then 
 	    return 0
 	else
 	    return 1
@@ -124,8 +115,7 @@ function GetLatestShadowsocksVersion()
 {
 	local shadowsocksurl=`curl -s https://api.github.com/repos/shadowsocks/shadowsocks-libev/releases/latest | grep tag_name | cut -d '"' -f 4`
 	
-	if [ $? -ne 0 ]
-	then
+	if [ $? -ne 0 ]; then
 	    Die "Get latest shadowsocks version failed!"
 	else
 	    ShadowsocksVersion=`echo $shadowsocksurl|sed 's/v//g'`
@@ -141,8 +131,7 @@ function InstallLibudns()
     ./configure && make && \
 	cp udns.h /usr/include/ && \
 	cp libudns.a /usr/lib/ 
-    if [ $? -ne 0 ]
-    then
+    if [ $? -ne 0 ]; then
     #failure indication
         Die "Libudns installation failed!"
     fi
@@ -157,8 +146,7 @@ function InstallLibsodium()
 	
     pushd ${ShadowsocksDir}/packages/libsodium-$LIBSODIUM_VER
     ./configure --prefix=/usr && make && make install
-	if [ $? -ne 0 ]
-	then
+	if [ $? -ne 0 ]; then
     #failure indication
         Die "Libsodium installation failed!"
     fi
@@ -173,8 +161,7 @@ function InstallMbedtls()
 	
     pushd ${ShadowsocksDir}/packages/mbedtls-$MBEDTLS_VER	
     make SHARED=1 CFLAGS=-fPIC && make DESTDIR=/usr install
-	if [ $? -ne 0 ]
-	then
+	if [ $? -ne 0 ]; then
     #failure indication
         Die "Mbedtls installation failed!"
     fi
@@ -202,8 +189,7 @@ function InstallShadowsocksCore()
 	mv ${ShadowsocksDir}/packages/shadowsocks-libev-${ShadowsocksVersion} ${ShadowsocksDir}/packages/shadowsocks-libev
     pushd ${ShadowsocksDir}/packages/shadowsocks-libev
     ./configure --prefix=/usr --disable-documentation && make && make install
-	if [ $? -ne 0 ]
-	then
+	if [ $? -ne 0 ]; then
     #failure indication
         Die "Shadowsocks-libev installation failed!"
     fi	
@@ -249,8 +235,7 @@ function Init()
 	cd /root
 	
     #create packages and conf directory
-	if [ -d ${ShadowsocksDir} ]
-	then 
+	if [ -d ${ShadowsocksDir} ]; then 
 	    rm -rf ${ShadowsocksDir}	
 	fi
 	mkdir ${ShadowsocksDir}
@@ -282,12 +267,10 @@ function InstallShadowsocks()
     echo '-----------------------------------------------------------------'
     echo ''
 	#input server port
-	while :
-	do
+	while :; do
         read -p "input server port(443 is default): " server_port
 		[ -z "$server_port" ] && server_port=443
-        if CheckServerPort $(($server_port))
-		then
+        if CheckServerPort $(($server_port)); then
 		    break
 		else
 		    echo -e "${CFAILURE}[Error] The server port should be between 1 to 65535! ${CEND}"
@@ -299,19 +282,16 @@ function InstallShadowsocks()
 	echo ''
 	
 	#select encrypt method
-	while :
-	do
+	while :; do
 		echo 'Please select encrypt method:'
         i=1
-		for var in "${Ciphers[@]}"
-		do
+		for var in "${Ciphers[@]}"; do
             echo -e "\t${CMSG}${i}${CEND}. ${var}"
 			let i++
         done
 		read -p "Please input a number:(Default 1 press Enter) " encrypt_method_num
 		[ -z "$encrypt_method_num" ] && encrypt_method_num=1
-		if [[ ! $encrypt_method_num =~ ^[1-${#Ciphers[@]}]$ ]]
-		then
+		if [[ ! $encrypt_method_num =~ ^[1-${#Ciphers[@]}]$ ]]; then
 			echo -e "${CWARNING} input error! Please only input number 1~${#Ciphers[@]} ${CEND}"
 		else
 		    let encrypt_method_num=encrypt_method_num-1
@@ -323,8 +303,7 @@ function InstallShadowsocks()
 	echo ''
 	echo '-----------------------------------------------------------------'
 	echo ''
-	while :
-	do
+	while :; do
         read -p "input password: " shadowsocks_pwd
 	    if [ -z ${shadowsocks_pwd} ]; then
 		    echo -e "${CFAILURE}[Error] The password is null! ${CEND}"
@@ -357,8 +336,7 @@ EOF
     /etc/init.d/${ShadowsocksType} start
 
     #if failed, start again --debian8 specified
-    if [ $? -ne 0 ]
-	then
+    if [ $? -ne 0 ]; then
     #failure indication
 	    echo ''
         echo '-----------------------------------------------------------------'
