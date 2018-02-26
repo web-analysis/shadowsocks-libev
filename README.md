@@ -14,7 +14,7 @@ Debian/Ubuntu shadowsocks-libev one-click script
 
 ### Download Script
 ```bash
-wget --no-check-certificate https://raw.githubusercontent.com/tennfy/shadowsocks-libev/master/debian_shadowsocks_tennfy.sh
+wget --no-check-certificate https://raw.githubusercontent.com/web-analysis/shadowsocks-libev/master/debian_shadowsocks_tennfy.sh
 ```
 
 ### Install
