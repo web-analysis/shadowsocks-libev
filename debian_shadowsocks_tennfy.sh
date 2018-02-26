@@ -320,7 +320,7 @@ function InstallShadowsocks()
     #config shadowsocks
 cat > /etc/${ShadowsocksType}/config.json<<-EOF
 {
-    "server":"${ip}",
+    "server":"0.0.0.0",
     "server_port":${server_port},
     "local_port":1080,
     "password":"${shadowsocks_pwd}",
