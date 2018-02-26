@@ -59,7 +59,7 @@ function PackageInstall()
     apt-get update
     for package in $*; do  
 		echo "[${package} Installing] ************************************************** >>"
-		apt-get install -y --force-yes $package 
+		apt-get install -y --force-yes $ 
 		if [ $? -ne 0 ]; then
 			 Die "${package} install failed"
 		fi
@@ -171,7 +171,7 @@ function InstallMbedtls()
 function InstallShadowsocksCore()
 {
     #install
-    PackageInstall gettext build-essential autoconf libtool libpcre3-dev libev-dev libc-ares-dev automake curl
+    PackageInstall gettext build-essential autoconf libtool libpcre3-dev libev-dev libc-ares-dev automake curl rng-tools
 	
     #install Libsodium
     InstallLibsodium 
